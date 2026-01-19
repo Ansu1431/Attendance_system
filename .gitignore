@@ -30,6 +30,13 @@ attendence_excel.xls
 tempCodeRunnerFile.py
 .admin_password
 email_config.py
+config/email_config.py
+data/*.csv
+data/*.xls
+data/*.xlsx
+*.pyc
+__pycache__/
+tempCodeRunnerFile.py
 
 # Logs
 *.log

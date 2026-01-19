@@ -1,16 +1,30 @@
-# Attendance frontend + simple Flask backend
+# Face Recognition Attendance System
 
-This adds a minimal Flask web frontend to the existing project so users can mark attendance by verifying themselves using the webcam. An admin UI allows adding/removing students.
+A modern Flask-based web application for face recognition-based attendance tracking. Features a beautiful UI with glassmorphism design, admin dashboard, and email-based password recovery.
 
-Files added:
+## 📁 Project Structure
 
-- `app.py` - Flask application exposing verification and admin endpoints and serving the frontend.
-- `templates/index.html` - Student-facing page that captures webcam image and verifies.
-- `templates/admin_login.html` - Admin login page with forgot password option.
-- `templates/admin_dashboard.html` - Admin page to add/remove students.
-- `templates/forgot_password.html` - Password reset request page.
-- `templates/reset_password.html` - Password reset page.
-- `requirements.txt` - Python dependencies.
+```
+attendance/
+├── app.py              # Main Flask application
+├── config/             # Configuration files (email_config.py)
+├── data/               # Attendance records (CSV/Excel)
+├── docs/               # Documentation
+├── scripts/            # Utility scripts
+├── static/             # CSS, JS, and student images
+└── templates/          # HTML templates
+```
+
+For detailed structure, see [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+
+## ✨ Features
+
+- **Face Recognition Attendance** - Webcam-based face recognition for attendance
+- **Modern UI** - Beautiful glassmorphism design with animations
+- **Admin Dashboard** - Comprehensive admin panel with statistics
+- **Password Recovery** - Email-based forgot password functionality
+- **Certified Badge** - Professional certification indicator
+- **Responsive Design** - Works on desktop and mobile devices
 
 How it works
 

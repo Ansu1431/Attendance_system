@@ -52,8 +52,39 @@ def save_admin_password(password):
 ADMIN_PASSWORD = get_admin_password()
 
 # Try to load from config file first, then environment variables
+# Check root directory first (for backward compatibility), then config directory
 try:
-    from email_config import *
+    # Try root directory first
+    import email_config as email_cfg
+    ADMIN_EMAIL = getattr(email_cfg, 'ADMIN_EMAIL', os.environ.get('ADMIN_EMAIL', 'admin@example.com'))
+    ADMIN_NAME = getattr(email_cfg, 'ADMIN_NAME', os.environ.get('ADMIN_NAME', 'Admin'))
+    app.config['MAIL_SERVER'] = getattr(email_cfg, 'MAIL_SERVER', os.environ.get('MAIL_SERVER', 'smtp.gmail.com'))
+    app.config['MAIL_PORT'] = int(getattr(email_cfg, 'MAIL_PORT', os.environ.get('MAIL_PORT', 587)))
+    app.config['MAIL_USE_TLS'] = getattr(email_cfg, 'MAIL_USE_TLS', True) if hasattr(email_cfg, 'MAIL_USE_TLS') else (os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true')
+    app.config['MAIL_USE_SSL'] = getattr(email_cfg, 'MAIL_USE_SSL', False) if hasattr(email_cfg, 'MAIL_USE_SSL') else (os.environ.get('MAIL_USE_SSL', 'false').lower() == 'true')
+    app.config['MAIL_USERNAME'] = getattr(email_cfg, 'MAIL_USERNAME', os.environ.get('MAIL_USERNAME', ''))
+    app.config['MAIL_PASSWORD'] = getattr(email_cfg, 'MAIL_PASSWORD', os.environ.get('MAIL_PASSWORD', ''))
+    app.config['MAIL_DEFAULT_SENDER'] = getattr(email_cfg, 'MAIL_DEFAULT_SENDER', os.environ.get('MAIL_DEFAULT_SENDER', ADMIN_EMAIL))
+    print("[OK] Email configuration loaded from email_config.py")
+except ImportError:
+    # Try config directory
+    try:
+        import sys
+        config_path = os.path.join(BASE_DIR, 'config')
+        if config_path not in sys.path:
+            sys.path.insert(0, config_path)
+        import email_config as email_cfg
+        ADMIN_EMAIL = getattr(email_cfg, 'ADMIN_EMAIL', os.environ.get('ADMIN_EMAIL', 'admin@example.com'))
+        ADMIN_NAME = getattr(email_cfg, 'ADMIN_NAME', os.environ.get('ADMIN_NAME', 'Admin'))
+        app.config['MAIL_SERVER'] = getattr(email_cfg, 'MAIL_SERVER', os.environ.get('MAIL_SERVER', 'smtp.gmail.com'))
+        app.config['MAIL_PORT'] = int(getattr(email_cfg, 'MAIL_PORT', os.environ.get('MAIL_PORT', 587)))
+        app.config['MAIL_USE_TLS'] = getattr(email_cfg, 'MAIL_USE_TLS', True) if hasattr(email_cfg, 'MAIL_USE_TLS') else (os.environ.get('MAIL_USE_TLS', 'true').lower() == 'true')
+        app.config['MAIL_USE_SSL'] = getattr(email_cfg, 'MAIL_USE_SSL', False) if hasattr(email_cfg, 'MAIL_USE_SSL') else (os.environ.get('MAIL_USE_SSL', 'false').lower() == 'true')
+        app.config['MAIL_USERNAME'] = getattr(email_cfg, 'MAIL_USERNAME', os.environ.get('MAIL_USERNAME', ''))
+        app.config['MAIL_PASSWORD'] = getattr(email_cfg, 'MAIL_PASSWORD', os.environ.get('MAIL_PASSWORD', ''))
+        app.config['MAIL_DEFAULT_SENDER'] = getattr(email_cfg, 'MAIL_DEFAULT_SENDER', os.environ.get('MAIL_DEFAULT_SENDER', ADMIN_EMAIL))
+        print("[OK] Email configuration loaded from config/email_config.py")
+    except ImportError:
     # Load email config from file
     ADMIN_EMAIL = ADMIN_EMAIL if 'ADMIN_EMAIL' in locals() else os.environ.get('ADMIN_EMAIL', 'admin@example.com')
     ADMIN_NAME = ADMIN_NAME if 'ADMIN_NAME' in locals() else os.environ.get('ADMIN_NAME', 'Admin')
@@ -84,8 +115,8 @@ mail = Mail(app)
 # Token serializer for password reset
 serializer = URLSafeTimedSerializer(app.secret_key)
 
-IMAGES_DIR = os.path.join(BASE_DIR, 'images')
-ATTENDANCE_CSV = os.path.join(BASE_DIR, 'attendance.csv')
+IMAGES_DIR = os.path.join(BASE_DIR, 'static', 'images')
+ATTENDANCE_CSV = os.path.join(BASE_DIR, 'data', 'attendance.csv')
 
 
 def sanitize_name(name: str) -> str:
@@ -169,7 +200,7 @@ def forgot_password():
                 msg = Message(
                     subject='Password Reset Request - Attendance System',
                     recipients=[ADMIN_EMAIL],
-                    html=render_template('email_reset_password.html', 
+                    html=render_template('emails/email_reset_password.html', 
                                        reset_url=reset_url, 
                                        admin_name=ADMIN_NAME,
                                        expiry_hours=1)
