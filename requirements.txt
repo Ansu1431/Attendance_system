@@ -1,0 +1,6 @@
+Flask>=2.0
+face_recognition
+numpy
+Pillow
+opencv-python
+ImageHash
