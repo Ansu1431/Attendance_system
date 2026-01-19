@@ -1,34 +1,109 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Attendance - Verify</title>
+    <title>Face Recognition Attendance System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="/static/css/style.css" rel="stylesheet">
   </head>
-  <body class="bg-light">
-    <div class="container py-5">
-      <div class="card shadow-sm">
-        <div class="card-body">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h3 class="card-title">Mark Attendance</h3>
-            <a class="btn btn-sm btn-outline-secondary" href="/admin">Admin</a>
-          </div>
-          <p class="text-muted">Allow camera access, then click Verify to take a snapshot and verify your face.</p>
+  <body>
+    <!-- Certified Badge -->
+    <div class="certified-badge">
+      <span>CERTIFIED</span>
+    </div>
 
-          <div class="row">
-            <div class="col-md-8">
-              <div class="video-wrap bg-dark d-flex justify-content-center align-items-center">
-                <video id="video" autoplay playsinline class="w-100" muted></video>
-              </div>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-custom">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">
+          <i class="fas fa-face-smile me-2"></i>
+          Attendance System
+        </a>
+        <div class="d-flex gap-2">
+          <a class="btn btn-admin" href="/admin">
+            <i class="fas fa-user-shield me-2"></i>Admin Panel
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-10">
+          <div class="glass-card fade-in-up">
+            <!-- Header Section -->
+            <div class="text-center mb-4">
+              <h1 class="page-title">
+                <i class="fas fa-camera me-3"></i>Mark Your Attendance
+              </h1>
+              <p class="text-white-80 fs-5">
+                Position yourself in front of the camera and click verify to record your attendance
+              </p>
             </div>
-            <div class="col-md-4">
-              <div class="mb-3">
-                <button id="verify" class="btn btn-primary btn-lg w-100">Verify & Mark Attendance</button>
+
+            <div class="row g-4 mt-2">
+              <!-- Video Section -->
+              <div class="col-lg-8">
+                <div class="video-wrap">
+                  <video id="video" autoplay playsinline muted></video>
+                  <div class="position-absolute top-0 start-0 m-3">
+                    <span class="badge bg-success bg-opacity-75 px-3 py-2">
+                      <i class="fas fa-circle me-2" style="font-size: 8px;"></i>Live
+                    </span>
+                  </div>
+                </div>
+                <div class="mt-3 text-center">
+                  <small class="text-white-60">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Make sure your face is clearly visible and well-lit
+                  </small>
+                </div>
               </div>
-              <div id="result" class="alert d-none" role="alert"></div>
-              <div class="mt-3 small text-muted">Tip: Stand still and center your face inside the video.</div>
+
+              <!-- Control Panel -->
+              <div class="col-lg-4">
+                <div class="card-modern h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h5 class="card-title text-white mb-4">
+                      <i class="fas fa-fingerprint me-2"></i>Verification Panel
+                    </h5>
+                    
+                    <button id="verify" class="btn btn-modern btn-success-modern btn-lg w-100 mb-4">
+                      <i class="fas fa-check-circle me-2"></i>Verify & Mark Attendance
+                    </button>
+
+                    <div id="result" class="alert-modern d-none mb-4" role="alert"></div>
+
+                    <div class="mt-auto">
+                      <div class="card-modern p-3 mb-3">
+                        <div class="d-flex align-items-center">
+                          <div class="icon-wrapper">
+                            <i class="fas fa-lightbulb text-warning"></i>
+                          </div>
+                          <div>
+                            <small class="text-white-80 d-block fw-bold">Tips</small>
+                            <small class="text-white-60">Stand still and center your face</small>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="card-modern p-3">
+                        <div class="d-flex align-items-center">
+                          <div class="icon-wrapper">
+                            <i class="fas fa-shield-alt text-success"></i>
+                          </div>
+                          <div>
+                            <small class="text-white-80 d-block fw-bold">Secure</small>
+                            <small class="text-white-60">Your data is encrypted</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

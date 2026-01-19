@@ -16,14 +16,30 @@
 
   function el(id) { return document.getElementById(id); }
 
+  function showResult(message, isSuccess) {
+    addResult.innerHTML = '';
+    addResult.className = 'mt-3 alert-modern ' + (isSuccess ? 'alert-success-modern' : 'alert-danger-modern');
+    const icon = isSuccess ? '<i class="fas fa-check-circle me-2"></i>' : '<i class="fas fa-exclamation-circle me-2"></i>';
+    addResult.innerHTML = icon + message;
+    addResult.classList.remove('d-none');
+  }
+
   async function startCamera() {
     if (stream) return;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: 'user',
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        } 
+      });
       el(webcamVideoId).srcObject = stream;
       el(webcamContainerId).classList.remove('d-none');
+      el(webcamToggleBtnId).innerHTML = '<i class="fas fa-stop me-2"></i>Stop Webcam';
+      showResult('Camera started. Position the student and click Capture Photo.', true);
     } catch (e) {
-      addResult.textContent = 'Camera failed: ' + e.message;
+      showResult('Camera failed: ' + e.message, false);
     }
   }
 
@@ -33,6 +49,8 @@
     stream = null;
     el(webcamVideoId).srcObject = null;
     el(webcamContainerId).classList.add('d-none');
+    el(webcamToggleBtnId).innerHTML = '<i class="fas fa-video me-2"></i>Use Webcam';
+    showResult('Camera stopped.', true);
   }
 
   function captureImage() {
@@ -47,7 +65,12 @@
 
   async function onCaptureClicked(e) {
     e.preventDefault();
-    addResult.textContent = 'Capturing...';
+    if (!stream) {
+      showResult('Please start the webcam first.', false);
+      return;
+    }
+    
+    showResult('Capturing image...', true);
     const blob = await captureImage();
     if (blob) {
       capturedBlob = blob;
@@ -55,41 +78,65 @@
       const img = el(webcamPreviewId);
       img.src = url;
       img.classList.remove('d-none');
-      addResult.textContent = 'Captured — fill name and click Add Student.';
-      // stopCamera(); // keep camera running for more captures
+      showResult('Photo captured! Fill in the name and click Add Student.', true);
     } else {
-      addResult.textContent = 'Capture failed';
+      showResult('Capture failed. Please try again.', false);
     }
   }
 
   async function onFormSubmit(e) {
     e.preventDefault();
-    addResult.textContent = 'Uploading...';
+    const nameInput = addForm.querySelector('[name="name"]');
+    const name = nameInput.value.trim();
+    
+    if (!name) {
+      showResult('Please enter a student name.', false);
+      return;
+    }
+
+    showResult('Uploading student data...', true);
+    
     const fd = new FormData();
-    const name = addForm.querySelector('[name="name"]').value;
     fd.append('name', name);
+    
     const fileInput = addForm.querySelector('[name="image"]');
     if (fileInput && fileInput.files && fileInput.files.length > 0) {
       fd.append('image', fileInput.files[0]);
     } else if (capturedBlob) {
       const filename = (name || 'student') + '.jpg';
       fd.append('image', new File([capturedBlob], filename, { type: 'image/jpeg' }));
-    } else {
-      addResult.textContent = 'Please provide an image (upload or capture).';
-      return;
     }
+    // Allow submission without image (placeholder will be used)
 
     try {
+      const submitBtn = addForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...';
+
       const resp = await fetch('/api/admin/add_student', { method: 'POST', body: fd });
       const j = await resp.json();
+      
       if (j.ok) {
-        addResult.textContent = 'Added successfully';
-        setTimeout(() => location.reload(), 600);
+        showResult(`Student "${name}" added successfully!`, true);
+        // Clear form
+        nameInput.value = '';
+        if (fileInput) fileInput.value = '';
+        capturedBlob = null;
+        const img = el(webcamPreviewId);
+        img.src = '';
+        img.classList.add('d-none');
+        
+        setTimeout(() => location.reload(), 1500);
       } else {
-        addResult.textContent = j.error || 'Error adding student';
+        showResult(j.error || 'Error adding student', false);
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-plus-circle me-2"></i>Add Student';
       }
     } catch (err) {
-      addResult.textContent = 'Upload failed: ' + err.message;
+      showResult('Upload failed: ' + err.message, false);
+      const submitBtn = addForm.querySelector('button[type="submit"]');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-plus-circle me-2"></i>Add Student';
     }
   }
 
@@ -97,11 +144,33 @@
     removeButtons().forEach(btn => {
       btn.addEventListener('click', async () => {
         const name = btn.dataset.name;
-        if (!confirm('Remove ' + name + '?')) return;
-        const fd = new FormData(); fd.append('name', name);
-        const resp = await fetch('/api/admin/remove_student', { method: 'POST', body: fd });
-        const j = await resp.json();
-        if (j.ok) location.reload(); else alert('Error');
+        if (!confirm(`Are you sure you want to remove "${name}"? This action cannot be undone.`)) return;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        
+        const fd = new FormData(); 
+        fd.append('name', name);
+        
+        try {
+          const resp = await fetch('/api/admin/remove_student', { method: 'POST', body: fd });
+          const j = await resp.json();
+          if (j.ok) {
+            // Show success message
+            const row = btn.closest('tr');
+            row.style.opacity = '0.5';
+            row.style.transition = 'opacity 0.3s';
+            setTimeout(() => location.reload(), 500);
+          } else {
+            alert('Error removing student');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-trash me-1"></i>Remove';
+          }
+        } catch (e) {
+          alert('Request failed: ' + e.message);
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-trash me-1"></i>Remove';
+        }
       });
     });
   }
@@ -109,18 +178,31 @@
   // Setup webcam UI controls (inject if not present)
   function setupWebcamUI() {
     const container = document.createElement('div');
-    container.className = 'mt-3';
+    container.className = 'mt-4';
     container.innerHTML = `
-      <div class="card">
+      <div class="card-modern">
+        <div class="card-header">
+          <h6 class="mb-0">
+            <i class="fas fa-camera me-2"></i>Capture from Webcam
+          </h6>
+        </div>
         <div class="card-body">
-          <h6 class="card-title">Capture from Webcam</h6>
-          <div class="mb-2">
-            <button id="${webcamToggleBtnId}" class="btn btn-outline-primary btn-sm">Use Webcam</button>
-            <button id="${webcamCaptureBtnId}" class="btn btn-success btn-sm ms-2">Capture Photo</button>
+          <div class="mb-3">
+            <button id="${webcamToggleBtnId}" class="btn btn-modern btn-sm me-2">
+              <i class="fas fa-video me-2"></i>Use Webcam
+            </button>
+            <button id="${webcamCaptureBtnId}" class="btn btn-modern btn-success-modern btn-sm">
+              <i class="fas fa-camera me-2"></i>Capture Photo
+            </button>
           </div>
           <div id="${webcamContainerId}" class="d-none">
-            <video id="${webcamVideoId}" autoplay playsinline muted style="width:100%; max-height:320px; background:#000"></video>
-            <img id="${webcamPreviewId}" class="mt-2 d-none" style="width:160px; height:120px; object-fit:cover; border-radius:6px" />
+            <div class="video-wrap mb-3">
+              <video id="${webcamVideoId}" autoplay playsinline muted></video>
+            </div>
+            <div class="text-center">
+              <img id="${webcamPreviewId}" class="d-none rounded shadow" 
+                   style="width:200px; height:150px; object-fit:cover; border:3px solid rgba(255,255,255,0.3);" />
+            </div>
           </div>
         </div>
       </div>
@@ -133,17 +215,22 @@
     toggle.addEventListener('click', async (ev) => {
       if (!stream) {
         await startCamera();
-        toggle.textContent = 'Stop Webcam';
       } else {
         stopCamera();
-        toggle.textContent = 'Use Webcam';
       }
     });
 
     capture.addEventListener('click', onCaptureClicked);
   }
 
-  // initialize
+  // Cleanup on page unload
+  window.addEventListener('beforeunload', () => {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+  });
+
+  // Initialize
   if (addForm) {
     addForm.addEventListener('submit', onFormSubmit);
     setupWebcamUI();

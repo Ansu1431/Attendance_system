@@ -28,6 +28,8 @@ Thumbs.db
 attendance.csv
 attendence_excel.xls
 tempCodeRunnerFile.py
+.admin_password
+email_config.py
 
 # Logs
 *.log
